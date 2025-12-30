@@ -14,7 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+use std::fs;
+use std::path::Path;
+use log::debug;
 use crate::models;
 use serde::{Serialize, Deserialize};
 use models::{file::File, project_tag::ProjectTag};
@@ -28,4 +30,25 @@ pub struct Project {
     pub notes: Option<String>,
     pub files: Option<Vec<File>>,
     pub tags: Option<Vec<ProjectTag>>,
+}
+
+impl Project {
+    pub fn get_file_system_files(&mut self) -> Vec<String> {
+        Project::scan_dir(self.path.clone())
+    }
+    fn scan_dir(dir: String) -> Vec<String> {
+        let mut result  :Vec<String> = Vec::new();
+        debug!("Scanning Directory: {}", dir);
+        for entry in fs::read_dir(Path::new(dir.as_str())).unwrap() {
+            let entry = entry.unwrap();
+            if entry.file_type().unwrap().is_dir() {
+                let mut subresult = Project::scan_dir(entry.path().to_str().unwrap().to_string());
+                result.append(&mut subresult);
+                //debug!("Scanning Project directory {}. The Project Name is {}", entry.path().display(), entry.file_name().display());
+            } else {
+                result.push(entry.path().to_str().unwrap().to_string());
+            }
+        }
+        result
+    }
 }

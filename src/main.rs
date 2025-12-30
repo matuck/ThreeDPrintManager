@@ -148,8 +148,9 @@ impl ThreeDPrintManager {
                 self.scan_project_dirs();
                 self.get_projects();
             }
-            Message::SelectProject(project) => {
-                self.selected_project = Some(project);
+            Message::SelectProject(mut project) => {
+                self.db_manager.update_project_files(project.clone(),  project.get_file_system_files());
+                self.selected_project = Some(self.db_manager.get_project(project.id.unwrap()));
                 self.screen = Screen::Project;
             }
             Message::FilterChanged(filter) => {

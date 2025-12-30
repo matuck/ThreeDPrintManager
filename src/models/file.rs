@@ -20,7 +20,7 @@ use serde::{Serialize, Deserialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct File {
     pub id: i32,
-    pub path: i32,
+    pub path: String,
     pub notes: Option<String>,
     pub project_id: i32,
 }

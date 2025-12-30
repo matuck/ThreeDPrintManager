@@ -21,7 +21,9 @@ use rust_embed::{Embed};
 use log::{error, warn, info, debug, trace};
 use crate::models;
 use models::project::Project;
-use crate::models::project_tag::ProjectTag;
+use models::project_tag::ProjectTag;
+use models::file::File;
+
 
 pub struct DbManager {
     connection: Connection,
@@ -55,6 +57,36 @@ impl DbManager {
                 let _ = self.connection.execute("INSERT INTO _migrations (version) VALUES (?)", &[&file_parts[0]]);
             }
         }
+    }
+
+    pub fn get_project(&self, id: i32) -> Project {
+        let mut stmt = self.connection.prepare(
+            "SELECT id, name, path, notes FROM projects where id = ?1",
+        ).unwrap();
+
+        let mut project = stmt.query_one([id], |row| {
+            Ok(Project {
+                id: Some(row.get(0)?),
+                name: row.get(1)?,
+                path: row.get(2)?,
+                notes: row.get(3)?,
+                tags: None,
+                files: None,
+            })
+        }).unwrap();
+        let mut files_stmt = self.connection.prepare(
+            "SELECT id, path, notes, project_id FROM project_files WHERE project_id = ?1",
+        ).unwrap();
+        let files :Vec<File> = files_stmt.query_map([id],|row| {
+            Ok(File{
+                id: row.get(0).unwrap(),
+                path: row.get(1).unwrap(),
+                notes: row.get(2).unwrap(),
+                project_id: row.get(3).unwrap(),
+            })
+        }).unwrap().into_iter().map(|r| r.unwrap()).collect();
+        project.files = Some(files);
+        project
     }
 
     pub fn get_filtered_projects(&self, name: Option<String>, path: Option<String>, tags: Option<Vec<ProjectTag>>) -> Result<Vec<Project>> {
@@ -98,23 +130,37 @@ impl DbManager {
         self.connection.execute(
             "INSERT INTO projects (name, path, notes) VALUES (?1, ?2, ?3)", params![project.name, project.path, project.notes.unwrap_or("".to_string())],
         )?;
-        let last_id = self.connection.last_insert_rowid();
+        let last_id = i32::try_from(self.connection.last_insert_rowid()).unwrap();
 
-        let mut stmt = self.connection.prepare(
-            "SELECT id, name, path, notes FROM projects where id = ?1",
-        )?;
-
-        let inserted_project = stmt.query_one([last_id], |row| {
-            Ok(Project {
-                id: Some(row.get(0)?),
-                name: row.get(1)?,
-                path: row.get(2)?,
-                notes: row.get(3)?,
-                tags: None,
-                files: None,
-            })
-        });
-        inserted_project
+        Ok(self.get_project(last_id))
     }
 
+    pub fn update_project_files(&self, project: Project, file_system_files: Vec<String>) {
+        //get existing files for project
+        let mut stmt = self.connection.prepare(
+            "SELECT path FROM project_files pf where project_id = ?1",
+        ).unwrap();
+
+        let files_query_results = stmt.query_map([project.id], |row| {
+            row.get::<usize, String>(0)
+        }).unwrap();
+        let existing_files: Vec<String> = files_query_results.into_iter().map(|r| r.unwrap()).collect();
+        //files_query_results.
+        let files_to_add: Vec<_> = file_system_files.clone().into_iter().filter(|item| !existing_files.contains(item)).collect();
+        let files_to_delete: Vec<_> = existing_files.clone().into_iter().filter(|item| !file_system_files.contains(item)).collect();
+        let mut add_files_stmt = self.connection.prepare(
+            "INSERT INTO project_files (project_id, path) VALUES (?1, ?2)",
+        ).unwrap();
+        for path in files_to_add.clone() {
+            let _ = add_files_stmt.execute((project.id, path));
+        };
+        let mut delete_files_stmt = self.connection.prepare(
+            "DELETE FROM project_files WHERE project_id = ?1 AND path = ?2;",
+        ).unwrap();
+        for path in files_to_delete.clone() {
+            let _ = delete_files_stmt.execute((project.id, path));
+        };
+        info!("{} added files: {:?}", project.name, files_to_add);
+        info!("{} deleted files: {:?}", project.name, files_to_delete);
+    }
 }
