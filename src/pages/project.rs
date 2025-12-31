@@ -16,7 +16,9 @@
  */
 
 use iced::Length;
-use iced::widget::{button, text, Container, row, column};
+use iced::widget::{button, text, Container, row, column, container, scrollable};
+use crate::models;
+use models::file::ProjectFile;
 use crate::{Message, ThreeDPrintManager};
 
 impl ThreeDPrintManager {
@@ -31,7 +33,27 @@ impl ThreeDPrintManager {
                             button("Back").on_press(Message::ToMainPage)
                         ]
                 ].width(Length::Fill)
+            )
+            .push(
+                self.project_view_files()
             );
         Container::new(main_content).width(Length::Fill).height(Length::Fill)
+    }
+
+    fn project_view_files(&self) -> Container<'_, Message> {
+        let mut file_list = column![].width(Length::Fill).height(Length::Fill);
+        for file in self.selected_project.clone().unwrap().files.unwrap() {
+            let mut strip_path= self.selected_project.clone().unwrap().path;
+            strip_path.push_str("/");
+            let mut thisrow = row![].width(Length::Fill);
+            thisrow = thisrow.push(text!("{}", file.path.to_string().replace(strip_path.as_str(), "")).width(Length::Fill));
+            if file.path.contains(".3mf") || file.path.contains(".stl") || file.path.contains(".jpg") || file.path.contains(".jpeg") || file.path.contains(".png") {
+                thisrow = thisrow.push(button("Set Default"));
+            }
+            thisrow = thisrow.push(button("Open").on_press(Message::OpenDirectory(file.path)));
+            file_list = file_list.push(thisrow)
+        }
+
+        Container::new(scrollable(file_list)).width(Length::Fill).height(Length::Fill)
     }
 }

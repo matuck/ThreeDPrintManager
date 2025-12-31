@@ -22,7 +22,7 @@ use log::{error, warn, info, debug, trace};
 use crate::models;
 use models::project::Project;
 use models::project_tag::ProjectTag;
-use models::file::File;
+use models::file::ProjectFile;
 
 
 pub struct DbManager {
@@ -77,8 +77,8 @@ impl DbManager {
         let mut files_stmt = self.connection.prepare(
             "SELECT id, path, notes, project_id FROM project_files WHERE project_id = ?1",
         ).unwrap();
-        let files :Vec<File> = files_stmt.query_map([id],|row| {
-            Ok(File{
+        let files :Vec<ProjectFile> = files_stmt.query_map([id], |row| {
+            Ok(ProjectFile {
                 id: row.get(0).unwrap(),
                 path: row.get(1).unwrap(),
                 notes: row.get(2).unwrap(),
@@ -109,6 +109,7 @@ impl DbManager {
             let mut taglist = "".to_string();
             println!("{}", &tags.unwrap().iter().map(|t| { format!("{}",t.).to_string() }).collect::<Vec<String>>().join(", "));
         }*/
+        sql.push_str(" ORDER BY p.name");
         debug!("{}", sql);
         let mut stmt = self.connection.prepare(sql.as_str(),)?;
         let project_rows = stmt.query_map([], |row| {

@@ -19,7 +19,7 @@ use std::path::Path;
 use log::debug;
 use crate::models;
 use serde::{Serialize, Deserialize};
-use models::{file::File, project_tag::ProjectTag};
+use models::{file::ProjectFile, project_tag::ProjectTag};
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -28,7 +28,7 @@ pub struct Project {
     pub name: String,
     pub path: String,
     pub notes: Option<String>,
-    pub files: Option<Vec<File>>,
+    pub files: Option<Vec<ProjectFile>>,
     pub tags: Option<Vec<ProjectTag>>,
 }
 

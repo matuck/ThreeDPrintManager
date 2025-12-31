@@ -20,7 +20,7 @@ pub mod models;
 mod db_manager;
 mod pages;
 
-use models::{project::Project, project_tag::ProjectTag, file::File};
+use models::{project::Project, project_tag::ProjectTag, file::ProjectFile};
 use std::fs::{self};
 use std::path::{Path};
 use config::Config;
