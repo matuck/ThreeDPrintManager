@@ -16,7 +16,7 @@
  */
 use env_logger::fmt::style::AnsiColor::White;
 use iced::{Background, Fill, Length, Theme};
-use iced::widget::{button, text, Container, container, row, column, Column, grid, text_input, Text};
+use iced::widget::{button, text, Container, container, row, column, Column, grid, text_input, Text, scrollable, checkbox};
 use crate::{Message, ThreeDPrintManager};
 
 impl ThreeDPrintManager {
@@ -51,6 +51,19 @@ impl ThreeDPrintManager {
                     })
                     .on_input(Message::FilterChanged)
             );
+        let mut tag_boxes = column![].width(Length::Fill).height(Length::Fill);
+        for tag in self.tag_list.iter() {
+            if self.filter_tags.contains(&tag) {
+                tag_boxes = tag_boxes.push(
+                    button(text!("☑ {}", tag.tag)).style(button::text).on_press(Message::FilterTagToggle(tag.clone()))
+                );
+            } else {
+                tag_boxes = tag_boxes.push(
+                    button(text!("☐ {}", tag.tag)).style(button::text).on_press(Message::FilterTagToggle(tag.clone()))
+                );
+            }
+        }
+        filter_column = filter_column.push(scrollable(tag_boxes));
         let mut side_panel = column![text("Filter").size(50)]
             .push(
                 column![filter_column].height(Length::Fill).width(Length::Fill)

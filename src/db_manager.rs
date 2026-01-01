@@ -103,22 +103,29 @@ impl DbManager {
         let mut sql = "select p.* from projects p".to_string();
         //add joins if needed
         if tags.is_some() {
-            sql.push_str(" JOIN projects_tags pt ON pt.project_id = o.id JOIN tags t ON t.id = pt.tag_id");
+            sql.push_str(" JOIN projects_tags pt ON pt.project_id = p.id");
         }
         if tags.is_some() || path.is_some() || name.is_some() {
             sql.push_str(" WHERE");
         }
         if name.is_some() {
-            sql.push_str(format!(" name LIKE '%{}%'", name.unwrap()).as_str());
+            sql.push_str(format!(" name LIKE '%{}%'", name.clone().unwrap()).as_str());
         }
         if path.is_some() {
-            sql.push_str(format!(" AND path = '{}'", path.unwrap()).as_str());
+            if name.is_some() {
+                sql.push_str(" AND");
+            }
+            sql.push_str(format!(" path = '{}'", path.clone().unwrap()).as_str());
         }
 
-        /*if tags.is_some() {
-            let mut taglist = "".to_string();
-            println!("{}", &tags.unwrap().iter().map(|t| { format!("{}",t.).to_string() }).collect::<Vec<String>>().join(", "));
-        }*/
+        if tags.is_some() {
+            if path.is_some() || name.is_some() {
+                sql.push_str(" AND");
+            }
+            let mytags = tags.unwrap();
+            let mytag_ids :Vec<String>= mytags.iter().map(|tag| tag.id.to_string()).collect();
+            sql.push_str(format!(" pt.tag_id IN ({}) GROUP BY p.id HAVING COUNT(DISTINCT pt.tag_id) = {}", mytag_ids.join(",").to_string(), mytags.len()).as_str());
+        }
         sql.push_str(" ORDER BY p.name");
         debug!("{}", sql);
         let mut stmt = self.connection.prepare(sql.as_str(),)?;
@@ -234,5 +241,17 @@ impl DbManager {
         addstmt.execute([tag.clone()]);
         let last_id = i32::try_from(self.connection.last_insert_rowid()).unwrap();
         self.get_tag_by_id(last_id)
+    }
+
+    pub fn get_tag_list(&self) -> Vec<ProjectTag> {
+        let mut stmt = self.connection.prepare(
+            "Select id, tag FROM tags ORDER BY tag",
+        ).unwrap();
+        stmt.query_map([], |row| {
+            Ok(ProjectTag{
+                id: row.get(0)?,
+                tag: row.get(1)?,
+            })
+        }).unwrap().into_iter().map(|r| r.unwrap()).collect()
     }
 }

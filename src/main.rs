@@ -68,6 +68,7 @@ pub enum Message {
     ScanProjectDirs,
     SelectProject(Project),
     FilterChanged(String),
+    FilterTagToggle(ProjectTag),
 
     //Settings Messages
     SetTheme(Theme),
@@ -94,6 +95,8 @@ pub struct ThreeDPrintManager {
     namefilter: String,
     project_note_editor: text_editor::Content,
     tag_to_add: String,
+    tag_list: Vec<ProjectTag>,
+    filter_tags: Vec<ProjectTag>
 }
 
 impl ThreeDPrintManager {
@@ -163,6 +166,14 @@ impl ThreeDPrintManager {
             }
             Message::FilterChanged(filter) => {
                self.namefilter = filter;
+                self.get_projects();
+            }
+            Message::FilterTagToggle(tag) => {
+                if let Some(pos) = self.filter_tags.iter().position(|x| *x == tag) {
+                    self.filter_tags.remove(pos);
+                } else {
+                    self.filter_tags.push(tag);
+                }
                 self.get_projects();
             }
 
@@ -239,7 +250,11 @@ impl ThreeDPrintManager {
         if !self.namefilter.eq(&"".to_string()) {
             optionfilter = Some(self.namefilter.clone());
         }
-        self.project_list = self.db_manager.get_filtered_projects(optionfilter,None,None).unwrap();
+        let mut filter_tags :Option<Vec<ProjectTag>> = None;
+        if self.filter_tags.len() > 0 {
+            filter_tags = Some(self.filter_tags.clone());
+        }
+        self.project_list = self.db_manager.get_filtered_projects(optionfilter,None,filter_tags).unwrap();
         info!("There are {} projects", self.project_list.len());
     }
     /*fn get_project_files(&mut self) {
@@ -288,6 +303,7 @@ impl Default for ThreeDPrintManager {
         dbfile.push("3DPrintManager.db");
         let dbmgr = db_manager::DbManager::new(dbfile.to_str().unwrap().to_string());
         dbmgr.run_migration();
+        let tag_list = dbmgr.get_tag_list();
         let mut myself = Self {
             screen: Screen::Main,
             config,
@@ -297,6 +313,8 @@ impl Default for ThreeDPrintManager {
             namefilter: "".to_string(),
             project_note_editor: text_editor::Content::with_text(""),
             tag_to_add: "".to_string(),
+            tag_list,
+            filter_tags: Vec::new(),
         };
         myself.get_projects();
         return myself;
