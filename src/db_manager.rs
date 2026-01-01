@@ -213,8 +213,8 @@ impl DbManager {
     pub fn get_tag_by_tag(&self, tag: String) -> Result<ProjectTag> {
         let mut stmt = self.connection.prepare(
             "Select id, tag FROM tags WHERE tag = ?1 LIMIT 1",
-        ).unwrap();
-        let mut mytag = stmt.query_one([tag.clone()], |row| {
+        )?;
+        let mytag = stmt.query_one([tag.clone()], |row| {
             Ok(ProjectTag {
                 id: row.get(0)?,
                 tag: row.get(1)?,
@@ -226,7 +226,7 @@ impl DbManager {
         let mut stmt = self.connection.prepare(
             "Select id, tag FROM tags WHERE id = ?1 LIMIT 1",
         ).unwrap();
-        let mut mytag = stmt.query_one([id], |row| {
+        let mytag = stmt.query_one([id], |row| {
             Ok(ProjectTag {
                 id: row.get(0)?,
                 tag: row.get(1)?,
@@ -238,7 +238,7 @@ impl DbManager {
         let mut addstmt = self.connection.prepare(
             "INSERT INTO tags (tag) VALUES (?1)"
         ).unwrap();
-        addstmt.execute([tag.clone()]);
+        addstmt.execute([tag.clone()])?;
         let last_id = i32::try_from(self.connection.last_insert_rowid()).unwrap();
         self.get_tag_by_id(last_id)
     }

@@ -15,12 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-use iced::{Background, Length, Theme};
-use iced::widget::{button, text, Container, row, Row, column, container, scrollable, text_editor, text_input, Space, pick_list, combo_box};
-use crate::models;
-use models::file::ProjectFile;
+use iced::{Length, Theme};
+use iced::widget::{button, text, Container, row, Row, column, scrollable, text_editor, text_input, Space};
 use crate::{Message, ThreeDPrintManager};
-use crate::models::project_tag::ProjectTag;
 
 impl ThreeDPrintManager {
     pub fn project(&self) -> Container<'_, Message> {

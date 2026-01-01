@@ -20,12 +20,12 @@ pub mod models;
 mod db_manager;
 mod pages;
 
-use models::{project::Project, project_tag::ProjectTag, file::ProjectFile};
+use models::{project::Project, project_tag::ProjectTag};
 use std::fs::{self};
 use std::path::{Path};
 use config::Config;
 use iced::{Element};
-use iced::widget::{button, Theme, text_editor, combo_box};
+use iced::widget::{button, Theme, text_editor};
 use iced_dialog::{dialog};
 use open;
 #[allow(unused)]
@@ -198,8 +198,8 @@ impl ThreeDPrintManager {
                 self.selected_project = self.db_manager.project_add_tag(self.selected_project.clone(), self.tag_to_add.clone());
                 self.tag_to_add = "".to_string();
             }
-            Message::ProjectNameUpdate(ProjectName) => {
-                self.selected_project.name = ProjectName;
+            Message::ProjectNameUpdate(project_name) => {
+                self.selected_project.name = project_name;
             }
         }
 

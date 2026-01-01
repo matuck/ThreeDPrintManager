@@ -14,9 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-use env_logger::fmt::style::AnsiColor::White;
-use iced::{Background, Fill, Length, Theme};
-use iced::widget::{button, text, Container, container, row, column, Column, grid, text_input, Text, scrollable, checkbox};
+
+use iced::{Background, Fill, Length};
+use iced::widget::{button, text, Container, row, column, grid, text_input, Text, scrollable};
 use crate::{Message, ThreeDPrintManager};
 
 impl ThreeDPrintManager {
@@ -26,7 +26,7 @@ impl ThreeDPrintManager {
         Container::new(main_content).width(Length::Fill).height(Length::Fill).center_x(Length::Fill).center_y(Length::Fill)
     }
     fn main_side_panel(&self) -> Container<'_, Message> {
-        let mut prog_options = column![]
+        let prog_options = column![]
             .push(
                 button(Container::new(Text::new("Settings")).center_x(Fill))
                     .style(Self::rounded_button)
@@ -64,7 +64,7 @@ impl ThreeDPrintManager {
             }
         }
         filter_column = filter_column.push(scrollable(tag_boxes));
-        let mut side_panel = column![text("Filter").size(50)]
+        let side_panel = column![text("Filter").size(50)]
             .push(
                 column![filter_column].height(Length::Fill).width(Length::Fill)
             )

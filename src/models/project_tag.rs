@@ -29,7 +29,4 @@ impl Display for ProjectTag {
     }
 }
 impl ProjectTag {
-    fn to_string(&self) -> String {
-        self.tag.clone()
-    }
 }

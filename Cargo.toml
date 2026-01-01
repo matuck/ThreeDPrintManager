@@ -7,7 +7,6 @@ authors = ["Mitch Tuck", "Mitch Tuck <matuck@matuck.com>"]
 publish = false
 readme = "README.md"
 license = "GPL-3"
-license-file = "LICENSE.txt"
 keywords = ["file_manager", "STL"]
 
 [dependencies]
