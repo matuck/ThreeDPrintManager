@@ -75,7 +75,7 @@ impl DbManager {
             })
         }).unwrap();
         let mut files_stmt = self.connection.prepare(
-            "SELECT id, path, notes, project_id FROM project_files WHERE project_id = ?1",
+            "SELECT id, path, notes, project_id FROM project_files WHERE project_id = ?1 ORDER BY path",
         ).unwrap();
         let files :Vec<ProjectFile> = files_stmt.query_map([id], |row| {
             Ok(ProjectFile {
