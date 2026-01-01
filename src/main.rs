@@ -235,11 +235,12 @@ impl ThreeDPrintManager {
             notes: project_notes,
             tags: vec![],
             files: vec![],
+            sources: vec![],
         };
         self.db_manager.create_project(new_project).unwrap()
     }
     fn does_project_with_path_exist(&mut self, project_path: String) -> bool {
-        let project_list = self.db_manager.get_filtered_projects(None,Some(project_path),None).unwrap_or(Vec::new());
+        let project_list = self.db_manager.get_filtered_projects(None,Some(project_path),None);
         if project_list.len() > 0 {
             return true
         }
@@ -254,7 +255,7 @@ impl ThreeDPrintManager {
         if self.filter_tags.len() > 0 {
             filter_tags = Some(self.filter_tags.clone());
         }
-        self.project_list = self.db_manager.get_filtered_projects(optionfilter,None,filter_tags).unwrap();
+        self.project_list = self.db_manager.get_filtered_projects(optionfilter,None,filter_tags);
         info!("There are {} projects", self.project_list.len());
     }
     /*fn get_project_files(&mut self) {

@@ -19,7 +19,7 @@ use std::path::Path;
 use log::debug;
 use crate::models;
 use serde::{Serialize, Deserialize};
-use models::{file::ProjectFile, project_tag::ProjectTag};
+use models::{file::ProjectFile, project_tag::ProjectTag, project_source::ProjectSource};
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -30,6 +30,7 @@ pub struct Project {
     pub notes: String,
     pub files: Vec<ProjectFile>,
     pub tags: Vec<ProjectTag>,
+    pub sources: Vec<ProjectSource>,
 }
 
 impl Project {
@@ -62,6 +63,7 @@ impl Default for Project {
             notes: "".to_string(),
             files: vec![],
             tags: vec![],
+            sources: vec![],
         }
     }
 }

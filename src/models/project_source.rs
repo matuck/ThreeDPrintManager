@@ -15,7 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-pub mod file;
-pub mod project;
-pub mod project_tag;
-pub mod project_source;
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ProjectSource {
+    pub id: i32,
+    pub url: String,
+    pub project_id: i32,
+}

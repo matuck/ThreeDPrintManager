@@ -23,7 +23,7 @@ use crate::models;
 use models::project::Project;
 use models::project_tag::ProjectTag;
 use models::file::ProjectFile;
-
+use crate::models::project_source::ProjectSource;
 
 pub struct DbManager {
     connection: Connection,
@@ -72,34 +72,17 @@ impl DbManager {
                 notes: row.get(3)?,
                 tags: vec![],
                 files: vec![],
+                sources: vec![],
             })
         }).unwrap();
-        let mut files_stmt = self.connection.prepare(
-            "SELECT id, path, notes, project_id FROM project_files WHERE project_id = ?1 ORDER BY path",
-        ).unwrap();
-        let files :Vec<ProjectFile> = files_stmt.query_map([id], |row| {
-            Ok(ProjectFile {
-                id: row.get(0).unwrap(),
-                path: row.get(1).unwrap(),
-                notes: row.get(2).unwrap(),
-                project_id: row.get(3).unwrap(),
-            })
-        }).unwrap().into_iter().map(|r| r.unwrap()).collect();
-        let mut tags_stmt = self.connection.prepare(
-            "SELECT t.id, t.tag FROM projects_tags pt LEFT JOIN tags t on pt.tag_id = t.id WHERE pt.project_id = ?1",
-        ).unwrap();
-        let tags :Vec<ProjectTag> = tags_stmt.query_map([id], |row| {
-            Ok(ProjectTag{
-                id: row.get(0).unwrap(),
-                tag: row.get(1).unwrap(),
-            })
-        }).unwrap().into_iter().map(|r| r.unwrap()).collect();
-        project.files = files;
-        project.tags = tags;
+
+        project.files = self.project_get_files(project.id);
+        project.tags = self.project_get_tags(project.id);
+        project.sources = self.project_get_sources(project.id);
         project
     }
 
-    pub fn get_filtered_projects(&self, name: Option<String>, path: Option<String>, tags: Option<Vec<ProjectTag>>) -> Result<Vec<Project>> {
+    pub fn get_filtered_projects(&self, name: Option<String>, path: Option<String>, tags: Option<Vec<ProjectTag>>) -> Vec<Project> {
         let mut sql = "select p.* from projects p".to_string();
         //add joins if needed
         if tags.is_some() {
@@ -128,8 +111,8 @@ impl DbManager {
         }
         sql.push_str(" ORDER BY p.name");
         debug!("{}", sql);
-        let mut stmt = self.connection.prepare(sql.as_str(),)?;
-        let project_rows = stmt.query_map([], |row| {
+        let mut stmt = self.connection.prepare(sql.as_str(),).unwrap();
+        let mut projects :Vec<Project> = stmt.query_map([], |row| {
             Ok(Project {
                 id: row.get(0)?,
                 name: row.get(1)?,
@@ -137,13 +120,67 @@ impl DbManager {
                 notes: row.get(3)?,
                 tags: vec![],
                 files: vec![],
+                sources: vec![],
             })
-        })?;
+        }).unwrap().into_iter().map(|r| r.unwrap()).collect();
 
-        let result: Vec<Project> = project_rows.into_iter().map(|r| r.unwrap()).collect();
-        Ok(result)
+        /*for mut project in &projects.into_iter() {
+            project.files = self.project_get_files(project.id);
+            project.tags = self.project_get_tags(project.id);
+            project.sources = self.project_get_sources(project.id);
+        }*/
+        let myprojects = projects.iter().map(|p| {
+            let mut proj = p.clone();
+            proj.sources = self.project_get_sources(proj.id);
+            proj.files = self.project_get_files(proj.id);
+            proj.tags = self.project_get_tags(proj.id);
+            proj
+        }).collect();
+        myprojects
     }
 
+    pub fn project_get_files(&self, project_id: i32) -> Vec<ProjectFile> {
+        let mut files_stmt = self.connection.prepare(
+            "SELECT id, path, notes, project_id, isdefault FROM project_files WHERE project_id = ?1 ORDER BY path",
+        ).unwrap();
+        let files :Vec<ProjectFile> = files_stmt.query_map([project_id], |row| {
+            Ok(ProjectFile {
+                id: row.get(0).unwrap(),
+                path: row.get(1).unwrap(),
+                notes: row.get(2).unwrap(),
+                project_id: row.get(3).unwrap(),
+                default: row.get(4).unwrap(),
+            })
+        }).unwrap().into_iter().map(|r| r.unwrap()).collect();
+        files
+    }
+
+    pub fn project_get_tags(&self, project_id: i32) -> Vec<ProjectTag> {
+        let mut tags_stmt = self.connection.prepare(
+            "SELECT t.id, t.tag FROM projects_tags pt LEFT JOIN tags t on pt.tag_id = t.id WHERE pt.project_id = ?1",
+        ).unwrap();
+        let tags :Vec<ProjectTag> = tags_stmt.query_map([project_id], |row| {
+            Ok(ProjectTag{
+                id: row.get(0).unwrap(),
+                tag: row.get(1).unwrap(),
+            })
+        }).unwrap().into_iter().map(|r| r.unwrap()).collect();
+        tags
+    }
+
+    pub fn project_get_sources(&self, project_id: i32) -> Vec<ProjectSource> {
+        let mut sources_stmt = self.connection.prepare(
+            "SELECT id, url, project_id FROM project_sources WHERE project_id = ?1"
+        );
+        let sources :Vec<ProjectSource> = sources_stmt.unwrap().query_map([project_id], |row| {
+            Ok(ProjectSource{
+                id: row.get(0)?,
+                url: row.get(1)?,
+                project_id: row.get(2)?,
+            })
+        }).unwrap().into_iter().map(|r| r.unwrap()).collect();
+        sources
+    }
     pub fn create_project(&self, project: Project) -> Result<Project> {
         self.connection.execute(
             "INSERT INTO projects (name, path, notes) VALUES (?1, ?2, ?3)", params![project.name, project.path, project.notes],

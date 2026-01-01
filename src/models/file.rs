@@ -23,4 +23,5 @@ pub struct ProjectFile {
     pub path: String,
     pub notes: Option<String>,
     pub project_id: i32,
+    pub default: bool,
 }
