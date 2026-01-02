@@ -1,5 +1,5 @@
 [package]
-name = "ThreeDPrintManager"
+name = "ThreeDManager"
 description = "Manage 3D prints.  Make them searchable and keep notes."
 version = "0.1.0"
 edition = "2024"

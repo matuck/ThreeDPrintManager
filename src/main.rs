@@ -47,10 +47,10 @@ pub fn main() -> iced::Result {
 
     env_logger::init_from_env(env);
 
-    iced::application(ThreeDPrintManager::default, ThreeDPrintManager::update, ThreeDPrintManager::view)
-        .title(ThreeDPrintManager::title)
+    iced::application(ThreeDManager::default, ThreeDManager::update, ThreeDManager::view)
+        .title(ThreeDManager::title)
         .centered()
-        .theme(ThreeDPrintManager::theme)
+        .theme(ThreeDManager::theme)
         .run()
 }
 
@@ -90,7 +90,7 @@ pub enum Message {
     ProjectNameUpdate(String),
 }
 
-pub struct ThreeDPrintManager {
+pub struct ThreeDManager {
     screen: Screen,
     config: Config,
     db_manager: DbManager,
@@ -106,7 +106,7 @@ pub struct ThreeDPrintManager {
     stl_thumb: String,
 }
 
-impl ThreeDPrintManager {
+impl ThreeDManager {
     /**
      * Set Application Title
      */
@@ -207,7 +207,6 @@ impl ThreeDPrintManager {
                 self.tag_to_add = tag;
             }
             Message::ProjectAddTag => {
-                self.selected_project = self.db_manager.project_add_tag(self.selected_project.clone(), self.tag_to_add.clone());
                 self.tag_to_add = "".to_string();
             }
             Message::ProjectNameUpdate(project_name) => {
@@ -319,7 +318,7 @@ impl ThreeDPrintManager {
         self.config.get_theme()
     }
 }
-impl Default for ThreeDPrintManager {
+impl Default for ThreeDManager {
     fn default() -> Self {
         let stl_thumb = which("stl-thumb").unwrap_or(PathBuf::default()).to_str().unwrap_or("").to_string();
         info!("ThreeDPrintManager Started");

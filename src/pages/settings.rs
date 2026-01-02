@@ -20,9 +20,9 @@ use iced::Length;
 use iced::widget::{row, Column, Container, button, Space, column, text, pick_list};
 use iced::Theme;
 use rfd::FileDialog;
-use crate::{Message, ThreeDPrintManager};
+use crate::{Message, ThreeDManager};
 
-impl ThreeDPrintManager {
+impl ThreeDManager {
     pub fn settings(&self) -> Container<'_, Message> {
         let mut project_dirs_widget :Column<Message> = Column::new();
         if self.config.print_paths.is_some() {

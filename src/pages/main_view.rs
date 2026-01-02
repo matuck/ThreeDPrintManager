@@ -19,9 +19,9 @@ use iced::{Background, Fill, Length};
 use iced::widget::{button, text, container, Container, row, column, text_input, Text, scrollable, image};
 use iced::alignment::{Horizontal};
 use iced::widget::text::Alignment;
-use crate::{Message, ThreeDPrintManager};
+use crate::{Message, ThreeDManager};
 
-impl ThreeDPrintManager {
+impl ThreeDManager {
     pub fn main_view(&self) -> Container<'_, Message> {
         let main_content = row![self.main_side_panel(), self.main_project_panel()];
 

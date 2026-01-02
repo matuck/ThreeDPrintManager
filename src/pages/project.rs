@@ -17,9 +17,9 @@
 
 use iced::{Length, Theme};
 use iced::widget::{button, text, Container, row, Row, column, scrollable, text_editor, text_input, Space, image};
-use crate::{Message, ThreeDPrintManager};
+use crate::{Message, ThreeDManager};
 
-impl ThreeDPrintManager {
+impl ThreeDManager {
     pub fn project(&self) -> Container<'_, Message> {
         let main_content = iced::widget::column![]
             .push(
@@ -58,7 +58,7 @@ impl ThreeDPrintManager {
         for tag in self.selected_project.tags.iter() {
             tag_list = tag_list.push(
                 button(text(tag.tag.to_string()))
-                    .style(ThreeDPrintManager::button_tag_style)
+                    .style(ThreeDManager::button_tag_style)
                     .padding(3).on_press(Message::RemoveTag(tag.clone()))
                 );
             tag_list = tag_list.push(Space::new().width(5));
@@ -69,7 +69,7 @@ impl ThreeDPrintManager {
             text_input("Tag to add", &self.tag_to_add.as_str()).on_input(Message::TagToAddChanged),
         )
             .push(
-                button(text("Add Tag")).style(ThreeDPrintManager::rounded_button).on_press(Message::ProjectAddTag)
+                button(text("Add Tag")).style(ThreeDManager::rounded_button).on_press(Message::ProjectAddTag)
             );
 
         content = content.push(add_tag);
