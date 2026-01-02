@@ -88,7 +88,12 @@ impl ThreeDManager {
             let mut strip_path= self.selected_project.clone().path;
             strip_path.push_str("/");
             let mut thisrow = row![].width(Length::Fill);
-            thisrow = thisrow.push(text!("{}", file.path.to_string().replace(strip_path.as_str(), "")).width(Length::Fill));
+            thisrow = thisrow.push(
+                button(
+                    text!("{}", file.path.to_string().replace(strip_path.as_str(), "")))
+                    .style(button::text)
+                    .on_press(Message::SelectFile(file.clone()))
+                    .width(Length::Fill));
             if file.path.contains(".3mf") || file.path.contains(".stl") || file.path.contains(".jpg") || file.path.contains(".jpeg") || file.path.contains(".png") {
                 thisrow = thisrow.push(button("Set Default"));
             }

@@ -88,6 +88,7 @@ pub enum Message {
     TagToAddChanged(String),
     ProjectAddTag,
     ProjectNameUpdate(String),
+    SelectFile(ProjectFile),
 }
 
 pub struct ThreeDManager {
@@ -212,6 +213,12 @@ impl ThreeDManager {
             }
             Message::ProjectNameUpdate(project_name) => {
                 self.selected_project.name = project_name;
+            }
+            Message::SelectFile(file) => {
+                self.selected_project_file = Some(file.clone());
+                if file.is_image_or_can_generate_to_image() {
+                    self.selected_image_project_file = Some(file.clone());
+                }
             }
         }
 
