@@ -73,6 +73,7 @@ impl ProjectFile {
         stl_thumb_config.img_filename=format!("{}/{}{}", path.to_str().unwrap(), filename, ".png");
         let filepath = Path::new(stl_thumb_config.img_filename.as_str());
         if !filepath.exists() {
+            info!("Creating file {:?}", stl_thumb_config.img_filename);
             if let Err(e) = stl_thumb::render_to_file(&stl_thumb_config) {
                 error!("Application error: {}", e);
                 return "".to_string();

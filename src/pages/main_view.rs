@@ -15,8 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-use iced::{Background, Fill, Length};
-use iced::widget::{button, text, Container, row, column, grid, text_input, Text, scrollable};
+use iced::{Background, Fill, Length, Pixels};
+use iced::widget::{button, text, container, Container, row, column, grid, text_input, Text, scrollable, image};
+use iced::alignment::{Horizontal};
+use iced::widget::text::Alignment;
+use rusqlite::fallible_iterator::FallibleIterator;
 use crate::{Message, ThreeDPrintManager};
 
 impl ThreeDPrintManager {
@@ -74,28 +77,34 @@ impl ThreeDPrintManager {
         Container::new(side_panel).width(Length::Fixed(20.0)).height(Length::Fill).center_x(Length::FillPortion(1)).center_y(Length::Fill)
     }
     fn main_project_panel(&self) -> Container<'_, Message> {
-        let mut project_grid = grid![].height(Length::Fill);
+        let mut project_grid = row![].height(Length::Fill).width(Length::Fill);
         let mut project_panel = column![text("Project List").size(50)].height(Length::Fill).width(Length::Fill);
 
         for project in &self.project_list {
+            let project_file = project.get_default_or_first_image_file();
+            let imagepath = match project_file {
+                Some(project_file) => project_file.get_image_path(),
+                None => "".to_string()
+            };
+
             project_grid = project_grid.push(
-                //text(project.name.as_str())
-                button(project.name.as_str()
-                       /*container(
-                           row![text(project.name.to_string())]
-                               //.align_items(Alignment::Center)
-                               .spacing(10),
+                button(
+                       container(
+                           column![
+                               text(project.name.to_string()).align_x(Alignment::Center).width(Length::Fill),
+                               image(imagepath)
+                           ],
                        )
-                           .width(Length::Fixed(200.0))
-                           .height(Length::Fixed(50.0))
-                           //.center_x()
-                           //.center_y(),*/
-                ).style(button::text)
+                           .align_x(Horizontal::Center)
+                )
                     .on_press(Message::SelectProject(project.clone()))
+                    .height(Length::Fixed(200.0))
+                    .width(Length::Fixed(200.0))
+                    .style(button::text)
 
             );
         }
-        project_panel = project_panel.push(project_grid);
+        project_panel = project_panel.push(scrollable(project_grid.wrap()));
         Container::new(project_panel).width(Length::Fill).height(Length::Fill).center_x(Length::FillPortion(4)).center_y(Length::Fill)
     }
 }
