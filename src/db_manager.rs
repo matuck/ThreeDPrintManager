@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 use rusqlite::{params, Connection, Result};
 use rust_embed::{Embed};
 #[allow(unused)]
@@ -290,5 +289,41 @@ impl DbManager {
                 tag: row.get(1)?,
             })
         }).unwrap().into_iter().map(|r| r.unwrap()).collect()
+    }
+
+    pub fn update_project_file(&self, project_file:ProjectFile) -> ProjectFile {
+        let mut updatestmt = self.connection.prepare(
+            "UPDATE project_files SET path = ?1, notes = ?2, isdefault = ?3,  project_id=?4 WHERE id = ?5;",
+        ).unwrap();
+
+        //make all other files not default for project if this file is default.
+        if project_file.default {
+            let set_not_default_stmt = self.connection.prepare(
+                "UPDATE project_files SET isdefault = 0 WHERE project_id = ?1"
+            );
+            let _ = set_not_default_stmt.unwrap().execute(params![project_file.project_id]);
+        }
+
+        let isdefault = match project_file.default {
+            true => 1,
+            false => 0,
+        }.to_string();
+        let _ = updatestmt.execute([project_file.path, project_file.notes.unwrap_or("".to_string()),isdefault, project_file.project_id.to_string(), project_file.id.to_string()]);
+        self.get_project_file_by_id(project_file.id)
+    }
+    pub fn get_project_file_by_id(&self, id: i32) -> ProjectFile {
+        let mut files_stmt = self.connection.prepare(
+            "SELECT id, path, notes, project_id, isdefault FROM project_files WHERE id = ?1 LIMIT 1",
+        ).unwrap();
+        let file :ProjectFile = files_stmt.query_one([id], |row| {
+            Ok(ProjectFile {
+                id: row.get(0).unwrap(),
+                path: row.get(1).unwrap(),
+                notes: row.get(2).unwrap(),
+                project_id: row.get(3).unwrap(),
+                default: row.get(4).unwrap(),
+            })
+        }).unwrap();
+        file
     }
 }
