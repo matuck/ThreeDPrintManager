@@ -16,24 +16,23 @@
  */
 use std::fs;
 use std::path::Path;
-use iced::{Background, Fill, Length, Element, Theme};
+use iced::{Background, Fill, Length, Element};
 use iced::widget::{button, text, container, Container, row, column, text_input, Text, scrollable, image};
 use iced::alignment::{Horizontal};
 use iced::widget::text::Alignment;
 use iced_dialog::dialog;
 use log::{debug, error, info};
-use crate::{Screen, ThreeDManager};
+use crate::{ThreeDManager};
 use crate::config::Config;
 use crate::db_manager::DbManager;
 use crate::models::project::Project;
 use crate::models::project_tag::ProjectTag;
-use crate::pages::{project, settings};
 
 pub struct MainView {
     config: Config,
     db_manager: DbManager,
     project_list: Vec<Project>,
-    namefilter: String,
+    name_filter: String,
     tag_list: Vec<ProjectTag>,
     filter_tags: Vec<ProjectTag>,
     stl_thumb: String,
@@ -50,12 +49,12 @@ pub enum Message {
 }
 impl MainView {
     pub fn new(config: Config) -> Self {
-        let mut db_manager = ThreeDManager::setup_db_connection(config.clone());
+        let db_manager = ThreeDManager::setup_db_connection();
         let mut main_view = MainView {
             config,
             db_manager,
             project_list: vec![],
-            namefilter: "".to_string(),
+            name_filter: "".to_string(),
             tag_list: vec![],
             filter_tags: vec![],
             stl_thumb: ThreeDManager::get_stl_thumb(),
@@ -72,13 +71,13 @@ impl MainView {
                 std::process::exit(1);
             }
             Message::ToSettingsPage => {}  //should never get here this is handled in main update
-            Message::SelectProject(project) => {} //should never get here this is handled in main update
+            Message::SelectProject(_) => {} //should never get here this is handled in main update
             Message::ScanProjectDirs => {
                 self.scan_project_dirs();
                 self.get_projects();
             }
             Message::FilterChanged(filter) => {
-                self.namefilter = filter;
+                self.name_filter = filter;
                 self.get_projects();
             }
             Message::FilterTagToggle(tag) => {
@@ -128,11 +127,11 @@ impl MainView {
                     .on_press(Message::ScanProjectDirs)
                     .width(Length::FillPortion(4))
             )
-            .width(Length::Fill);
-        let mut filter_column = column![].width(Length::Fill).height(Length::Fill);
+            .width(Fill);
+        let mut filter_column = column![].width(Fill).height(Fill);
         filter_column = filter_column
             .push(
-                text_input("Search", &self.namefilter)
+                text_input("Search", &self.name_filter)
                     .style(|theme, status| {
                         let mut style = text_input::default(theme, status);
                         style.background = Background::Color(iced::Color::BLACK);
@@ -140,7 +139,7 @@ impl MainView {
                     })
                     .on_input(Message::FilterChanged)
             );
-        let mut tag_boxes = column![].width(Length::Fill).height(Length::Fill);
+        let mut tag_boxes = column![].width(Fill).height(Fill);
         for tag in self.tag_list.iter() {
             if self.filter_tags.contains(&tag) {
                 tag_boxes = tag_boxes.push(
@@ -155,20 +154,20 @@ impl MainView {
         filter_column = filter_column.push(scrollable(tag_boxes));
         let side_panel = column![text("Filter").size(50)]
             .push(
-                column![filter_column].height(Length::Fill).width(Length::Fill)
+                column![filter_column].height(Fill).width(Fill)
             )
             .push(
-                row![prog_options].width(Length::Fill)
-            ).width(Length::Fill);
-        Container::new(side_panel).width(Length::Fixed(20.0)).height(Length::Fill).center_x(Length::FillPortion(1)).center_y(Length::Fill)
+                row![prog_options].width(Fill)
+            ).width(Fill);
+        Container::new(side_panel).width(Length::Fixed(20.0)).height(Fill).center_x(Length::FillPortion(1)).center_y(Fill)
     }
     fn main_project_panel(&self) -> Container<'_, Message> {
-        let mut project_grid = row![].height(Length::Fill).width(Length::Fill);
-        let mut project_panel = column![text("Project List").size(50)].height(Length::Fill).width(Length::Fill);
+        let mut project_grid = row![].height(Fill).width(Fill);
+        let mut project_panel = column![text("Project List").size(50)].height(Fill).width(Fill);
 
         for project in &self.project_list {
             let project_file = project.get_default_or_first_image_file();
-            let imagepath = match project_file {
+            let image_path = match project_file {
                 Some(project_file) => project_file.get_image_path(self.stl_thumb.clone()),
                 None => "".to_string()
             };
@@ -177,8 +176,8 @@ impl MainView {
                 button(
                        container(
                            column![
-                               text(project.name.to_string()).align_x(Alignment::Center).width(Length::Fill),
-                               image(imagepath)
+                               text(project.name.to_string()).align_x(Alignment::Center).width(Fill),
+                               image(image_path)
                            ],
                        )
                            .align_x(Horizontal::Center)
@@ -191,19 +190,19 @@ impl MainView {
             );
         }
         project_panel = project_panel.push(scrollable(project_grid.wrap()));
-        Container::new(project_panel).width(Length::Fill).height(Length::Fill).center_x(Length::FillPortion(4)).center_y(Length::Fill)
+        Container::new(project_panel).width(Fill).height(Fill).center_x(Length::FillPortion(4)).center_y(Fill)
     }
 
     fn get_projects(&mut self) {
-        let mut optionfilter = None;
-        if !self.namefilter.eq(&"".to_string()) {
-            optionfilter = Some(self.namefilter.clone());
+        let mut option_filter = None;
+        if !self.name_filter.eq(&"".to_string()) {
+            option_filter = Some(self.name_filter.clone());
         }
         let mut filter_tags :Option<Vec<ProjectTag>> = None;
         if self.filter_tags.len() > 0 {
             filter_tags = Some(self.filter_tags.clone());
         }
-        self.project_list = self.db_manager.get_filtered_projects(optionfilter,None,filter_tags);
+        self.project_list = self.db_manager.get_filtered_projects(option_filter, None, filter_tags);
         info!("There are {} projects", self.project_list.len());
     }
 

@@ -20,13 +20,10 @@ pub mod models;
 mod db_manager;
 mod pages;
 
-use std::fs::{self};
-use models::{project::Project, project_tag::ProjectTag};
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 use config::Config;
 use iced::{Element};
 use iced::widget::{button, Theme};
-use iced_dialog::{dialog};
 use which::which;
 #[allow(unused)]
 use log::{error, warn, info, debug, trace};
@@ -53,9 +50,9 @@ pub fn main() -> iced::Result {
 }
 
 enum Screen {
-    Main(pages::main_view::MainView),
-    Project(pages::project::ProjectPage),
-    Settings(pages::settings::SettingsPage),
+    Main(main_view::MainView),
+    Project(project::ProjectPage),
+    Settings(settings::SettingsPage),
 }
 
 #[derive(Debug, Clone)]
@@ -68,7 +65,6 @@ pub enum Message {
 pub struct ThreeDManager {
     screen: Screen,
     config: Config,
-    db_manager: DbManager,
 }
 
 impl ThreeDManager {
@@ -103,7 +99,7 @@ impl ThreeDManager {
             Message::MainPage(msg) => {
                 match msg {
                     main_view::Message::SelectProject(project) => {
-                        self.screen = Screen::Project(project::ProjectPage::new(self.config.clone(), project));
+                        self.screen = Screen::Project(project::ProjectPage::new(project));
                     }
                     main_view::Message::ToSettingsPage => {
                         self.screen = Screen::Settings(settings::SettingsPage::new(self.config.clone()));
@@ -129,12 +125,12 @@ impl ThreeDManager {
                 match msg {
                     settings::Message::BackToMain => {
                         self.config = Config::default();
-                        self.screen = Screen::Main(main_view::MainView::new(self.config.clone()));;
+                        self.screen = Screen::Main(main_view::MainView::new(self.config.clone()));
                     }
                     _ => {
                         //Get settings screen
                         let Screen::Settings(page) = &mut self.screen else { return () };
-                        //and give it back it's own message
+                        //and give it back the message
                         page.update(msg);
                     }
                 }
@@ -153,11 +149,12 @@ impl ThreeDManager {
         if cfg!(debug_assertions) {
             color = iced::Color::BLACK;
         }
-        match &self.screen {
-            Screen::Main(mainpage) => mainpage.view().map(Message::MainPage),
-            Screen::Project(projectpage)=> projectpage.view().map(Message::ProjectPage),
-            Screen::Settings(settingspage) => settingspage.view().map(Message::SettingsPage),
-        }
+        let screen = match &self.screen {
+            Screen::Main(main_page) => main_page.view().map(Message::MainPage),
+            Screen::Project(project_page)=> project_page.view().map(Message::ProjectPage),
+            Screen::Settings(settings_page) => settings_page.view().map(Message::SettingsPage),
+        };
+        screen.explain(color)
     }
 
     /**
@@ -167,10 +164,10 @@ impl ThreeDManager {
     fn theme(&self) -> Theme {
         self.config.get_theme()
     }
-    pub fn setup_db_connection(config :Config) -> DbManager {
-        let mut dbfile = Config::get_config_dir().unwrap();
-        dbfile.push("3DManager.db");
-        db_manager::DbManager::new(dbfile.to_str().unwrap().to_string())
+    pub fn setup_db_connection() -> DbManager {
+        let mut db_file = Config::get_config_dir().unwrap();
+        db_file.push("3DManager.db");
+        DbManager::new(db_file.to_str().unwrap().to_string())
     }
     pub fn get_stl_thumb() -> String {
         which("stl-thumb").unwrap_or(PathBuf::default()).to_str().unwrap_or("").to_string()
@@ -178,16 +175,13 @@ impl ThreeDManager {
 }
 impl Default for ThreeDManager {
     fn default() -> Self {
-        let stl_thumb = ThreeDManager::get_stl_thumb();
         info!("ThreeDManager Started");
         let config = Config::default();
-        let dbmgr = Self::setup_db_connection(config.clone());
-        dbmgr.run_migration();
-        let mut myself = Self {
+        let db_mgr = Self::setup_db_connection();
+        db_mgr.run_migration();
+        Self {
             screen: Screen::Main(main_view::MainView::new(config.clone())),
             config,
-            db_manager: dbmgr,
-        };
-        return myself;
+        }
     }
 }

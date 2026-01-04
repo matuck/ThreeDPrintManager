@@ -16,7 +16,7 @@
  */
 
 use iced::alignment::Horizontal;
-use iced::{Element, Length, Task};
+use iced::{Element, Length};
 use iced::widget::{row, Column, Container, button, Space, column, text, pick_list};
 use iced::Theme;
 use rfd::FileDialog;
@@ -47,9 +47,7 @@ impl SettingsPage{
             Message::SetTheme(theme) => {
                 self.config.set_theme(theme);
             }
-            Message::BackToMain => {
-                //this shouldnt get called into
-            }
+            Message::BackToMain => {} //this should not get called handle in main update
             Message::SettingsSave => {
                 self.config.save();
             }

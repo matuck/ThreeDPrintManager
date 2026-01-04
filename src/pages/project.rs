@@ -20,13 +20,11 @@ use iced::{Element, Length, Theme};
 use iced::alignment::Horizontal;
 use iced::widget::{button, text, Container, row, Row, column, scrollable, text_editor, text_input, Space, image};
 use log::{error, info};
-use crate::{Screen, ThreeDManager};
-use crate::config::Config;
+use crate::{ThreeDManager};
 use crate::db_manager::DbManager;
 use crate::models::file::ProjectFile;
 use crate::models::project::Project;
 use crate::models::project_tag::ProjectTag;
-use crate::pages::settings;
 
 pub struct ProjectPage {
     stl_thumb: String,
@@ -62,11 +60,11 @@ pub enum Message {
 }
 
 impl ProjectPage {
-    pub fn new(config :Config, project: Project) -> Self {
-        let db_manager = ThreeDManager::setup_db_connection(config.clone());
+    pub fn new(project: Project) -> Self {
+        let db_manager = ThreeDManager::setup_db_connection();
         let mut project_page = ProjectPage {
             stl_thumb: ThreeDManager::get_stl_thumb(),
-            db_manager: db_manager,
+            db_manager,
             selected_project: project,
             project_note_editor: text_editor::Content::with_text(""),
             project_file_note_editor: text_editor::Content::with_text(""),
@@ -246,8 +244,8 @@ impl ProjectPage {
         for file in self.selected_project.files.iter() {
             let mut strip_path= self.selected_project.clone().path;
             strip_path.push_str("/");
-            let mut thisrow = row![].width(Length::Fill);
-            thisrow = thisrow.push(
+            let mut this_row = row![].width(Length::Fill);
+            this_row = this_row.push(
                 button(
                     text!("{}", file.path.to_string().replace(strip_path.as_str(), "")))
                     .style(|theme :&Theme,status|{
@@ -267,7 +265,7 @@ impl ProjectPage {
                     })
                     .on_press(Message::SelectFile(file.clone()))
                     .width(Length::Fill));
-            file_list = file_list.push(thisrow)
+            file_list = file_list.push(this_row)
         }
 
         let mut file_actions_buttons = row![];
