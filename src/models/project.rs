@@ -43,12 +43,12 @@ impl Project {
         debug!("Scanning Directory: {}", dir);
         for entry in fs::read_dir(Path::new(dir.as_str())).unwrap() {
             let entry = entry.unwrap();
-            if entry.file_type().unwrap().is_dir() && !entry.path().to_str().unwrap().contains(".3DPrintManager") {
+            if entry.file_type().unwrap().is_dir() && !entry.path().to_str().unwrap().contains(".3DManager") {
                 let mut subresult = Project::scan_dir(entry.path().to_str().unwrap().to_string());
                 result.append(&mut subresult);
                 debug!("Scanning Project directory {}. The Project Name is {}", entry.path().display(), entry.file_name().display());
             } else {
-                if !entry.path().to_str().unwrap().contains(".3DPrintManager") {
+                if !entry.path().to_str().unwrap().contains(".3DManager") {
                     result.push(entry.path().to_str().unwrap().to_string());
                 }
             }

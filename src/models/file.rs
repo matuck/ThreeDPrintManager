@@ -71,7 +71,7 @@ impl ProjectFile {
         //get the project directory
         path = path.parent().unwrap().to_path_buf();
         //set the generated directory
-        path.push(".3DPrintManager");
+        path.push(".3DManager");
         //ensure generated directory exists
         create_dir_all(&path).unwrap();
         let image_file = format!("{}/{}{}", path.to_str().unwrap(), filename, ".png");
