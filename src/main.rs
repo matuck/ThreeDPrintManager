@@ -93,6 +93,7 @@ pub enum Message {
     SelectFile(ProjectFile),
     ProjectFileSave,
     SetFileDefault,
+    ProjectSave,
 }
 
 pub struct ThreeDManager {
@@ -252,6 +253,9 @@ impl ThreeDManager {
                 if file.is_image_or_can_generate_to_image() {
                     self.selected_image_project_file = Some(file.clone());
                 }
+            }
+            Message::ProjectSave => {
+                self.db_manager.update_project(self.selected_project.clone());
             }
         }
 
