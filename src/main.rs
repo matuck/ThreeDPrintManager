@@ -34,6 +34,7 @@ use which::which;
 use log::{error, warn, info, debug, trace};
 
 use env_logger::Env;
+use rusqlite::fallible_iterator::FallibleIterator;
 use crate::db_manager::DbManager;
 use crate::models::file::ProjectFile;
 
@@ -94,6 +95,10 @@ pub enum Message {
     ProjectFileSave,
     SetFileDefault,
     ProjectSave,
+    SourceNameUpdate(String),
+    SourceURLUpdate(String),
+    AddSource,
+    OpenSource(String),
 }
 
 pub struct ThreeDManager {
@@ -111,6 +116,8 @@ pub struct ThreeDManager {
     selected_project_file: Option<ProjectFile>,
     selected_image_project_file: Option<ProjectFile>,
     stl_thumb: String,
+    source_name: String,
+    source_url: String,
 }
 
 impl ThreeDManager {
@@ -257,6 +264,23 @@ impl ThreeDManager {
             Message::ProjectSave => {
                 self.db_manager.update_project(self.selected_project.clone());
             }
+            Message::SourceNameUpdate(source_name) => {
+                self.source_name = source_name;
+            }
+            Message::SourceURLUpdate(source_url) => {
+                self.source_url = source_url;
+            }
+            Message::AddSource => {
+                self.selected_project = self.db_manager.add_source(self.selected_project.clone(), self.source_name.clone(), self.source_url.clone());
+                self.source_name = "".to_string();
+                self.source_url = "".to_string();
+            }
+            Message::OpenSource(source_url) => {
+                match open::that_detached(source_url.clone()) {
+                    Ok(()) => info!("Opened '{}' successfully.", source_url),
+                    Err(err) => error!("An error occurred when opening '{}': {}", source_url, err),
+                }
+            }
         }
 
     }
@@ -400,7 +424,9 @@ impl Default for ThreeDManager {
             filter_tags: Vec::new(),
             selected_project_file: None,
             selected_image_project_file: None,
-            stl_thumb
+            stl_thumb,
+            source_name: "".to_string(),
+            source_url: "".to_string(),
         };
         myself.get_projects();
         return myself;

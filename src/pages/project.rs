@@ -50,6 +50,9 @@ impl ThreeDManager {
             )
             .push(
                 self.project_view_files()
+            )
+            .push(
+                self.project_view_sources()
             );
         Container::new(main_content).width(Length::Fill).height(Length::Fill)
     }
@@ -141,5 +144,24 @@ impl ThreeDManager {
                 button(text("Save File Notes").align_x(Horizontal::Center).width(Length::Fill)).on_press(Message::ProjectFileSave).width(Length::Fill).style(Self::rounded_button),
         ].height(Length::Fill).width(Length::Fill).align_x(Horizontal::Center);
         Container::new(row![file_list_container,file_note_editor]).width(Length::Fill).height(Length::Fill)
+    }
+    fn project_view_sources(&self) -> Container<'_, Message> {
+        let mut content = column![].width(Length::Fill);
+        let mut main_content = row![].width(Length::Fill);
+        main_content = main_content.push(text("Sources:").size(30));
+        for source in self.selected_project.sources.iter() {
+            main_content = main_content.push(
+                button(text(source.name.clone())).on_press(Message::OpenSource(source.url.clone()))
+            )
+        }
+        let mut add_content = row![].width(Length::Fill);
+        add_content = add_content.push(text_input("Source Name", &self.source_name)
+            .on_input(Message::SourceNameUpdate));
+        add_content = add_content.push(text_input("Source URL", &self.source_url)
+            .on_input(Message::SourceURLUpdate));
+        add_content = add_content.push(button(text("Add Source")).on_press(Message::AddSource));
+        content = content.push(main_content.wrap());
+        content = content.push(add_content);
+        Container::new(content).width(Length::Fill)
     }
 }

@@ -169,13 +169,14 @@ impl DbManager {
 
     pub fn project_get_sources(&self, project_id: i32) -> Vec<ProjectSource> {
         let sources_stmt = self.connection.prepare(
-            "SELECT id, url, project_id FROM project_sources WHERE project_id = ?1"
+            "SELECT id, url, project_id, name FROM project_sources WHERE project_id = ?1"
         );
         let sources :Vec<ProjectSource> = sources_stmt.unwrap().query_map([project_id], |row| {
             Ok(ProjectSource{
                 id: row.get(0)?,
                 url: row.get(1)?,
                 project_id: row.get(2)?,
+                name: row.get(3)?,
             })
         }).unwrap().into_iter().map(|r| r.unwrap()).collect();
         sources
@@ -331,6 +332,13 @@ impl DbManager {
             "UPDATE projects SET name = ?1, notes = ?2, path = ?3 WHERE id = ?4",
         ).unwrap();
         let _ = stmt.execute([project.name, project.notes, project.path, project.id.to_string()]);
+        self.get_project(project.id)
+    }
+    pub fn add_source(&self, project: Project, name: String, url: String) -> Project {
+        let mut stmt = self.connection.prepare(
+            "INSERT INTO project_sources (name, url, project_id) VALUES (?1, ?2, ?3)",
+        ).unwrap();
+        let _ = stmt.execute([name, url, project.id.to_string()]);
         self.get_project(project.id)
     }
 }
