@@ -326,4 +326,11 @@ impl DbManager {
         }).unwrap();
         file
     }
+    pub fn update_project(&self, project: Project) -> Project {
+        let mut stmt = self.connection.prepare(
+            "UPDATE projects SET name = ?1, notes = ?2, path = ?3 WHERE id = ?4",
+        ).unwrap();
+        let _ = stmt.execute([project.name, project.notes, project.path, project.id.to_string()]);
+        self.get_project(project.id)
+    }
 }

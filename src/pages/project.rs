@@ -26,11 +26,15 @@ impl ThreeDManager {
             .push(
                 row![
                     column![text_input("Project Name", &self.selected_project.name).size(50)
-                        .on_input(Message::ProjectNameUpdate),].width(Length::Fill),
+                        .on_input(Message::ProjectNameUpdate),
+                    ].width(Length::Fill),
                     column![
-                        button("Open Directory").on_press(Message::OpenDirectory(self.selected_project.path.clone())),
-                        button("Back").on_press(Message::ToMainPage)
-                    ],
+                        button(text("Open Directory").align_x(Horizontal::Center)).style(Self::rounded_button).on_press(Message::OpenDirectory(self.selected_project.path.clone())),
+                        row![
+                            button(text("Save").align_x(Horizontal::Center)).style(Self::rounded_button).on_press(Message::ProjectSave),
+                            button(text("Back").align_x(Horizontal::Center)).style(Self::rounded_button).on_press(Message::ToMainPage)
+                        ]
+                    ].align_x(Horizontal::Center),
                 ].width(Length::Fill)
             )
             .push(
