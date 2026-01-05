@@ -42,16 +42,16 @@ impl DbManager {
 
     }
     pub fn run_migration(&self) {
-        let currversion = self.connection.query_one("SELECT * FROM _migrations ORDER BY version DESC LIMIT 1", params![], |row| {
+        let current_version = self.connection.query_one("SELECT * FROM _migrations ORDER BY version DESC LIMIT 1", params![], |row| {
             Ok(row.get::<usize, String>(0)?)
         }).unwrap_or("0".to_string()).parse::<i64>().unwrap();
-        debug!("currversion: {}", currversion);
+        debug!("current version: {}", current_version);
         for file in Migrations::iter() {
             let file_parts = file.split("/").collect::<Vec<&str>>();
-            if currversion < file_parts[0].parse::<i64>().unwrap() && file_parts[1] == "up.sql" {
+            if current_version < file_parts[0].parse::<i64>().unwrap() && file_parts[1] == "up.sql" {
                 info!("Running migration {}", file_parts[0]);
-                let currfile = Migrations::get(&file.to_string()).unwrap();
-                let sql_to_run = std::str::from_utf8(&currfile.data).unwrap();
+                let current_file = Migrations::get(&file.to_string()).unwrap();
+                let sql_to_run = std::str::from_utf8(&current_file.data).unwrap();
                 let _ = self.connection.execute_batch(sql_to_run);
                 let _ = self.connection.execute("INSERT INTO _migrations (version) VALUES (?)", &[&file_parts[0]]);
             }
@@ -104,9 +104,9 @@ impl DbManager {
             if path.is_some() || name.is_some() {
                 sql.push_str(" AND");
             }
-            let mytags = tags.unwrap();
-            let mytag_ids :Vec<String>= mytags.iter().map(|tag| tag.id.to_string()).collect();
-            sql.push_str(format!(" pt.tag_id IN ({}) GROUP BY p.id HAVING COUNT(DISTINCT pt.tag_id) = {}", mytag_ids.join(",").to_string(), mytags.len()).as_str());
+            let my_tags = tags.unwrap();
+            let my_tags_id:Vec<String>= my_tags.iter().map(|tag| tag.id.to_string()).collect();
+            sql.push_str(format!(" pt.tag_id IN ({}) GROUP BY p.id HAVING COUNT(DISTINCT pt.tag_id) = {}", my_tags_id.join(",").to_string(), my_tags.len()).as_str());
         }
         sql.push_str(" ORDER BY p.name");
         debug!("{}", sql);
@@ -128,14 +128,14 @@ impl DbManager {
             project.tags = self.project_get_tags(project.id);
             project.sources = self.project_get_sources(project.id);
         }*/
-        let myprojects = projects.iter().map(|p| {
+        let my_projects = projects.iter().map(|p| {
             let mut proj = p.clone();
             proj.sources = self.project_get_sources(proj.id);
             proj.files = self.project_get_files(proj.id);
             proj.tags = self.project_get_tags(proj.id);
             proj
         }).collect();
-        myprojects
+        my_projects
     }
 
     pub fn project_get_files(&self, project_id: i32) -> Vec<ProjectFile> {
@@ -227,22 +227,22 @@ impl DbManager {
         self.get_project(project.id)
     }
     pub fn project_add_tag(&self, project: Project, tag: String) -> Project {
-        let mut mytag = self.get_tag_by_tag(tag.clone());
-        if mytag.is_err() {
-            mytag = self.add_tag(tag.clone());
+        let mut my_tag = self.get_tag_by_tag(tag.clone());
+        if my_tag.is_err() {
+            my_tag = self.add_tag(tag.clone());
         }
-        let mytag2 = mytag.unwrap();
+        let my_tag_2 = my_tag.unwrap();
         let mut proj_have_tag_stmt = self.connection.prepare(
             "SELECT count(*) FROM projects_tags WHERE project_id = ?1 AND tag_id = ?2",
         ).unwrap();
-        let tagcount :Result<i32> = proj_have_tag_stmt.query_one([project.id, mytag2.id], | row | {
+        let tag_count:Result<i32> = proj_have_tag_stmt.query_one([project.id, my_tag_2.id], |row | {
             Ok(row.get(0)?)
         });
-        if tagcount.unwrap() == 0 {
+        if tag_count.unwrap() == 0 {
             let mut stmt = self.connection.prepare(
                 "INSERT INTO projects_tags (project_id, tag_id) VALUES (?1, ?2)",
             ).unwrap();
-            let _ =stmt.execute(params![project.id, mytag2.id]);
+            let _ =stmt.execute(params![project.id, my_tag_2.id]);
         }
         self.get_project(project.id)
     }
@@ -251,31 +251,31 @@ impl DbManager {
         let mut stmt = self.connection.prepare(
             "Select id, tag FROM tags WHERE tag = ?1 LIMIT 1",
         )?;
-        let mytag = stmt.query_one([tag.clone()], |row| {
+        let my_tag = stmt.query_one([tag.clone()], |row| {
             Ok(ProjectTag {
                 id: row.get(0)?,
                 tag: row.get(1)?,
             })
         });
-        mytag
+        my_tag
     }
     pub fn get_tag_by_id(&self, id: i32) -> Result<ProjectTag> {
         let mut stmt = self.connection.prepare(
             "Select id, tag FROM tags WHERE id = ?1 LIMIT 1",
-        ).unwrap();
-        let mytag = stmt.query_one([id], |row| {
+        )?;
+        let my_tag = stmt.query_one([id], |row| {
             Ok(ProjectTag {
                 id: row.get(0)?,
                 tag: row.get(1)?,
             })
         });
-        mytag
+        my_tag
     }
     pub fn add_tag(&self, tag: String) -> Result<ProjectTag> {
-        let mut addstmt = self.connection.prepare(
+        let mut add_stmt = self.connection.prepare(
             "INSERT INTO tags (tag) VALUES (?1)"
-        ).unwrap();
-        addstmt.execute([tag.clone()])?;
+        )?;
+        add_stmt.execute([tag.clone()])?;
         let last_id = i32::try_from(self.connection.last_insert_rowid()).unwrap();
         self.get_tag_by_id(last_id)
     }
@@ -293,7 +293,7 @@ impl DbManager {
     }
 
     pub fn update_project_file(&self, project_file:ProjectFile) -> ProjectFile {
-        let mut updatestmt = self.connection.prepare(
+        let mut update_stmt = self.connection.prepare(
             "UPDATE project_files SET path = ?1, notes = ?2, isdefault = ?3,  project_id=?4 WHERE id = ?5;",
         ).unwrap();
 
@@ -309,7 +309,7 @@ impl DbManager {
             true => 1,
             false => 0,
         }.to_string();
-        let _ = updatestmt.execute([project_file.path, project_file.notes.unwrap_or("".to_string()),isdefault, project_file.project_id.to_string(), project_file.id.to_string()]);
+        let _ = update_stmt.execute([project_file.path, project_file.notes.unwrap_or("".to_string()),isdefault, project_file.project_id.to_string(), project_file.id.to_string()]);
         self.get_project_file_by_id(project_file.id)
     }
     pub fn get_project_file_by_id(&self, id: i32) -> ProjectFile {

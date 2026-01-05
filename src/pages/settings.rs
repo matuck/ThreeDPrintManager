@@ -16,14 +16,51 @@
  */
 
 use iced::alignment::Horizontal;
-use iced::Length;
+use iced::{Element, Length};
 use iced::widget::{row, Column, Container, button, Space, column, text, pick_list};
 use iced::Theme;
 use rfd::FileDialog;
-use crate::{Message, ThreeDManager};
+use super::super::config::Config;
 
-impl ThreeDManager {
-    pub fn settings(&self) -> Container<'_, Message> {
+pub struct SettingsPage {
+    config :Config,
+}
+
+#[derive(Debug, Clone)]
+pub enum Message {
+    SetTheme(Theme),
+    BackToMain,
+    SettingsSave,
+    SettingsAddProjectDirectory,
+    SettingsRemoveProjectDirectory(String),
+}
+
+impl SettingsPage{
+    pub fn new(config :Config) -> SettingsPage {
+        SettingsPage {
+            config
+        }
+    }
+
+    pub fn update(&mut self, message : Message) {
+        match message {
+            Message::SetTheme(theme) => {
+                self.config.set_theme(theme);
+            }
+            Message::BackToMain => {} //this should not get called handle in main update
+            Message::SettingsSave => {
+                self.config.save();
+            }
+            Message::SettingsAddProjectDirectory => {
+                self.add_project_directory();
+            }
+            Message::SettingsRemoveProjectDirectory(path) => {
+                self.config.remove_print_path(path.as_str());
+            }
+        }
+    }
+
+    pub fn view(&self) -> Element<'_, Message> {
         let mut project_dirs_widget :Column<Message> = Column::new();
         if self.config.print_paths.is_some() {
             for directory in self.config.print_paths.clone().unwrap() {
@@ -53,12 +90,12 @@ impl ThreeDManager {
             ).width(Length::Fill).height(Length::Fill);
         let action_content = iced::widget::column![
                 row![
-                    button("Cancel").on_press(Message::SettingsCancel),
+                    button("Back").on_press(Message::BackToMain),
                     Space::new().width(30),
                     button("Save").on_press(Message::SettingsSave)
                 ]
             ].width(Length::Fill).align_x(Horizontal::Right);
-        Container::new(iced::widget::column![main_content,action_content]).width(Length::Fill).height(Length::Fill)
+        Element::new(Container::new(iced::widget::column![main_content,action_content]).width(Length::Fill).height(Length::Fill))
     }
 
     pub fn add_project_directory (&mut self) {
@@ -68,5 +105,8 @@ impl ThreeDManager {
         if files.is_some() {
             self.config.add_print_path(files.unwrap().to_str().unwrap());
         }
+    }
+    fn theme(&self) -> Theme {
+        self.config.get_theme()
     }
 }

@@ -97,3 +97,14 @@ impl ProjectFile {
         "".to_string()
     }
 }
+impl Default for ProjectFile {
+    fn default() -> Self {
+        ProjectFile {
+            id: 0,
+            path: "".to_string(),
+            notes: Some("".to_string()),
+            project_id: 0,
+            default: false,
+        }
+    }
+}
