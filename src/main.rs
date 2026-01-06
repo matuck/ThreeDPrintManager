@@ -123,7 +123,20 @@ impl ThreeDManager {
             }
             Message::SettingsPage(msg) => {
                 match msg {
-                    settings::Message::BackToMain => {
+                    settings::Message::SetTheme(theme) => {
+                        self.config.set_theme(theme.clone());
+                        //Get settings screen
+                        let Screen::Settings(page) = &mut self.screen else { return () };
+                        //and give it back the message
+                        page.update(settings::Message::SetTheme(theme));
+
+                    }
+                    settings::Message::BackToMain(save) => {
+                        if save {
+                            let Screen::Settings(page) = &mut self.screen else { return () };
+                            //and give it back the message
+                            page.save_config();
+                        }
                         self.config = Config::default();
                         self.screen = Screen::Main(main_view::MainView::new(self.config.clone()));
                     }
