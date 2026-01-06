@@ -29,8 +29,8 @@ pub struct SettingsPage {
 #[derive(Debug, Clone)]
 pub enum Message {
     SetTheme(Theme),
-    BackToMain,
-    SettingsSave,
+    /// paraemeter should we save the config on exiting page.
+    BackToMain(bool),
     SettingsAddProjectDirectory,
     SettingsRemoveProjectDirectory(String),
 }
@@ -47,9 +47,9 @@ impl SettingsPage{
             Message::SetTheme(theme) => {
                 self.config.set_theme(theme);
             }
-            Message::BackToMain => {} //this should not get called handle in main update
-            Message::SettingsSave => {
-                self.config.save();
+            Message::BackToMain(save) => {
+                //this should not get called handle in main update
+                println!("{}", save);
             }
             Message::SettingsAddProjectDirectory => {
                 self.add_project_directory();
@@ -90,9 +90,9 @@ impl SettingsPage{
             ).width(Length::Fill).height(Length::Fill);
         let action_content = iced::widget::column![
                 row![
-                    button("Back").on_press(Message::BackToMain),
+                    button("Cancel").on_press(Message::BackToMain(false)),
                     Space::new().width(30),
-                    button("Save").on_press(Message::SettingsSave)
+                    button("Save").on_press(Message::BackToMain(true)),
                 ]
             ].width(Length::Fill).align_x(Horizontal::Right);
         Element::new(Container::new(iced::widget::column![main_content,action_content]).width(Length::Fill).height(Length::Fill))
@@ -108,5 +108,9 @@ impl SettingsPage{
     }
     fn theme(&self) -> Theme {
         self.config.get_theme()
+    }
+
+    pub fn save_config (&mut self) {
+        self.config.save();
     }
 }
